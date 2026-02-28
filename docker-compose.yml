@@ -4,7 +4,7 @@ services:
     container_name: py-blockchain
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8030:8000"
     volumes:
       - blockchain_data:/data
     environment:

@@ -1,14 +1,12 @@
 from block import Block
 from blockchain import BlockChain
 from flask import Flask, render_template, redirect, request
-import requests
 import json
 import time
 import datetime
 import os
 import sqlite3
 
-BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:5000')
 DB_PATH = os.environ.get('DB_PATH', 'blockchain.db')
 
 app = Flask(__name__)
@@ -117,24 +115,19 @@ def index():
 
 @app.route('/submit', methods=['POST'])
 def submit_textarea():
-    """
-    Endpoint to create a new transaction via our application.
-    """
-    print("--- submit ---")
-    post_content = request.form["content"]
-    author = request.form["author"]
+    post_content = request.form.get("content", "").strip()
+    author = request.form.get("author", "").strip()
 
-    post_object = {
+    if not post_content or not author:
+        return redirect('/')
+
+    load_db()
+    blockchain.add_new_transaction({
         'author': author,
         'content': post_content,
-    }
-
-    # Submit a transaction
-    new_tx_address = "{}/new_transaction".format(BASE_URL)
-
-    requests.post(new_tx_address,
-                  json=post_object,
-                  headers={'Content-type': 'application/json'})
+        'timestamp': time.time(),
+    })
+    save_db()
 
     return redirect('/')
 
