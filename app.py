@@ -6,10 +6,10 @@ import json
 import time
 import datetime
 import os
-import psycopg2
+import sqlite3
 
-BASE_URL = 'https://app-blockchain.herokuapp.com'
-DATABASE_URL = os.environ['DATABASE_URL']
+BASE_URL = os.environ.get('BASE_URL', 'http://127.0.0.1:5000')
+DB_PATH = os.environ.get('DB_PATH', 'blockchain.db')
 
 app = Flask(__name__)
 
@@ -17,28 +17,40 @@ blockchain = BlockChain()
 posts = []
 
 
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS blockchain (
+            chain TEXT,
+            pending_tx TEXT
+        )
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
+init_db()
+
+
 def timestamp_to_string(epoch_time):
     return datetime.datetime.fromtimestamp(epoch_time).strftime('%H:%M')
 
 
 def save_db():
-    # update db
-    chain_data = []
-    for block in blockchain.chain:
-        chain_data.append(block.__dict__)
-    chain = json.dumps({"length": len(chain_data),
-                       "chain": chain_data})
-
+    chain_data = [block.__dict__ for block in blockchain.chain]
+    chain = json.dumps({"length": len(chain_data), "chain": chain_data})
     pending_tx = json.dumps(blockchain.unconfirmed_transactions)
 
-    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("SELECT * FROM blockchain;")
-    data = cur.fetchone()
-    if data is not None:
-        cur.execute("UPDATE blockchain SET CHAIN = '{0}', PENDING_TX = '{1}';".format(chain, pending_tx))
+    cur.execute("SELECT COUNT(*) FROM blockchain;")
+    count = cur.fetchone()[0]
+    if count > 0:
+        cur.execute("UPDATE blockchain SET chain = ?, pending_tx = ?;", (chain, pending_tx))
     else:
-        cur.execute("INSERT INTO blockchain VALUES ('{0}', '{1}');".format(chain, pending_tx))
+        cur.execute("INSERT INTO blockchain VALUES (?, ?);", (chain, pending_tx))
     conn.commit()
     cur.close()
     conn.close()
@@ -46,16 +58,14 @@ def save_db():
 
 def load_db():
     global blockchain
-    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute("SELECT * FROM blockchain;")
     data = cur.fetchone()
     if data is not None:
         chain = []
         obj = json.loads(data[0])
-        # convert JSON array to an Array of Objects
         for block in obj['chain']:
-            print(block)
             blk = Block(block['index'],
                         block['transactions'],
                         block['timestamp'],
@@ -66,15 +76,14 @@ def load_db():
         blockchain.unconfirmed_transactions = json.loads(data[1])
     else:
         blockchain = BlockChain()
-    conn.commit()
     cur.close()
     conn.close()
 
 
 def clear_db():
-    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute("delete FROM blockchain;")
+    cur.execute("DELETE FROM blockchain;")
     conn.commit()
     cur.close()
     conn.close()

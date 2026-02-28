@@ -1,35 +1,1054 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{ title }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:         #080c14;
+            --bg-2:       #0d1225;
+            --card:       rgba(255,255,255,0.04);
+            --card-hover: rgba(255,255,255,0.07);
+            --border:     rgba(255,255,255,0.08);
+            --accent:     #6366f1;
+            --violet:     #8b5cf6;
+            --teal:       #14b8a6;
+            --grad:       linear-gradient(135deg, #6366f1, #8b5cf6);
+            --grad-teal:  linear-gradient(135deg, #14b8a6, #6366f1);
+            --text:       #f1f5f9;
+            --muted:      #94a3b8;
+            --dim:        #475569;
+            --success:    #10b981;
+            --danger:     #ef4444;
+            --warning:    #f59e0b;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Subtle dot-grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+            background-size: 44px 44px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Ambient glow top-left */
+        body::after {
+            content: '';
+            position: fixed;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 65%);
+            top: -200px;
+            left: -100px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: rgba(8,12,20,0.85);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-logo-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--grad);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.35);
+        }
+
+        .nav-logo-text {
+            font-size: 0.95rem;
+            font-weight: 700;
+            background: var(--grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.01em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 6px 13px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.18s;
+        }
+        .nav-link:hover {
+            color: var(--text);
+            background: var(--card);
+            border-color: var(--border);
+        }
+        .nav-link.danger { color: var(--danger); }
+        .nav-link.danger:hover {
+            background: rgba(239,68,68,0.08);
+            border-color: rgba(239,68,68,0.25);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            position: relative;
+            z-index: 1;
+            padding: 3rem 2rem 1.5rem;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.22);
+            color: #a5b4fc;
+            padding: 5px 13px;
+            border-radius: 100px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 1.1rem;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .hero h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #f1f5f9 10%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.7rem;
+            letter-spacing: -0.03em;
+        }
+
+        .hero p {
+            color: var(--muted);
+            font-size: 0.92rem;
+            max-width: 460px;
+            margin: 0 auto;
+            line-height: 1.65;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        main {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            max-width: 1080px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 1.5rem 2rem 4rem;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 1.25rem;
+            align-items: start;
+        }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: rgba(255,255,255,0.11); }
+
+        .card-header {
+            padding: 1.2rem 1.4rem 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-badge {
+            width: 26px;
+            height: 26px;
+            background: var(--grad);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+        }
+
+        .card-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .card-body {
+            padding: 1.1rem 1.4rem 1.4rem;
+        }
+
+        /* ── FORM ELEMENTS ── */
+        textarea, input[type="text"] {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            padding: 11px 13px;
+            outline: none;
+            resize: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        textarea::placeholder, input::placeholder { color: var(--dim); }
+        textarea:focus, input[type="text"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+        }
+        textarea { margin-bottom: 9px; }
+        input[type="text"] { margin-bottom: 11px; }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.855rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: all 0.18s;
+            white-space: nowrap;
+            line-height: 1;
+        }
+        .btn-primary {
+            background: var(--grad);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(99,102,241,0.28);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99,102,241,0.4);
+        }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-mine {
+            background: var(--grad-teal);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(20,184,166,0.22);
+            width: 100%;
+        }
+        .btn-mine:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(20,184,166,0.35);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover {
+            color: var(--text);
+            background: var(--card);
+            border-color: rgba(255,255,255,0.14);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid rgba(239,68,68,0.28);
+        }
+        .btn-danger:hover {
+            background: rgba(239,68,68,0.08);
+            border-color: var(--danger);
+        }
+
+        .btn-full { width: 100%; }
+
+        /* ── PENDING BADGE ── */
+        .pending-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 13px;
+            border-radius: 9px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+        .pending-info.active {
+            background: rgba(245,158,11,0.09);
+            border: 1px solid rgba(245,158,11,0.22);
+            color: #fbbf24;
+        }
+        .pending-info.empty {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            color: var(--dim);
+        }
+        .pending-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--warning);
+            animation: blink 1.6s infinite;
+            flex-shrink: 0;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.85); }
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .dev-tools {
+            display: flex;
+            gap: 8px;
+        }
+        .dev-tools .btn { flex: 1; font-size: 0.79rem; }
+
+        /* ── FEED ── */
+        .feed-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .feed-title {
+            font-size: 0.97rem;
+            font-weight: 600;
+        }
+        .feed-count {
+            font-size: 0.76rem;
+            color: var(--muted);
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* ── POST CARDS ── */
+        .post-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .post-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.15rem 1.25rem;
+            transition: all 0.18s;
+            animation: slideUp 0.28s ease both;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .post-card:hover {
+            border-color: rgba(255,255,255,0.12);
+            background: var(--card-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+
+        .post-card-header {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            margin-bottom: 11px;
+        }
+
+        .post-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 11px;
+            background: var(--grad);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            box-shadow: 0 3px 10px rgba(99,102,241,0.3);
+        }
+
+        .post-meta { flex: 1; min-width: 0; }
+        .post-author {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .post-time {
+            font-size: 0.76rem;
+            color: var(--muted);
+            margin-top: 1px;
+        }
+
+        .post-block-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #a5b4fc;
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.18);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: 'Space Mono', monospace;
+            flex-shrink: 0;
+        }
+
+        .post-content {
+            color: var(--muted);
+            font-size: 0.875rem;
+            line-height: 1.7;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center;
+            padding: 5rem 2rem;
+            color: var(--dim);
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+        }
+        .empty-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+            display: block;
+        }
+        .empty-state p {
+            font-size: 0.875rem;
+            line-height: 1.7;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--border);
+            padding: 1.4rem 2rem;
+            text-align: center;
+            color: var(--dim);
+            font-size: 0.78rem;
+        }
+        footer a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+        footer a:hover { color: var(--text); }
+
+        /* ── MODAL ── */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 7, 18, 0.82);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.22s ease;
+        }
+        .modal-backdrop.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .modal {
+            background: #0b1020;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 88vh;
+            overflow-y: auto;
+            transform: translateY(20px) scale(0.97);
+            transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 32px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(99,102,241,0.12);
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .modal-backdrop.open .modal {
+            transform: translateY(0) scale(1);
+        }
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: rgba(11,16,32,0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1;
+            border-radius: 20px 20px 0 0;
+        }
+        .modal-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .modal-title-icon {
+            width: 30px;
+            height: 30px;
+            background: var(--grad);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            box-shadow: 0 3px 10px rgba(99,102,241,0.3);
+        }
+        .modal-close {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.15s;
+            line-height: 1;
+        }
+        .modal-close:hover {
+            background: rgba(239,68,68,0.1);
+            border-color: rgba(239,68,68,0.3);
+            color: var(--danger);
+        }
+        .modal-body { padding: 1.75rem 1.5rem 2rem; }
+
+        /* Guide sections */
+        .guide-section { margin-bottom: 2rem; }
+        .guide-section:last-child { margin-bottom: 0; }
+        .guide-section-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .guide-section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .guide-text {
+            color: var(--muted);
+            font-size: 0.875rem;
+            line-height: 1.75;
+        }
+        .guide-text strong { color: var(--text); font-weight: 600; }
+
+        /* Block chain visual */
+        .chain-visual {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            overflow-x: auto;
+            padding: 1rem 0;
+            margin: 1rem 0;
+            scrollbar-width: none;
+        }
+        .chain-visual::-webkit-scrollbar { display: none; }
+        .chain-block {
+            background: rgba(99,102,241,0.08);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 10px;
+            padding: 10px 14px;
+            min-width: 130px;
+            flex-shrink: 0;
+        }
+        .chain-block.genesis {
+            background: rgba(20,184,166,0.08);
+            border-color: rgba(20,184,166,0.25);
+        }
+        .cb-name {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        .cb-field {
+            font-size: 0.65rem;
+            color: var(--dim);
+            font-family: 'Space Mono', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+        .cb-field span { color: #a5b4fc; }
+        .chain-arrow {
+            color: var(--dim);
+            font-size: 1.1rem;
+            padding: 0 6px;
+            flex-shrink: 0;
+        }
+
+        /* Step items */
+        .guide-steps { display: flex; flex-direction: column; gap: 12px; margin-top: 0.5rem; }
+        .guide-step {
+            display: flex;
+            gap: 13px;
+            align-items: flex-start;
+        }
+        .guide-step-num {
+            width: 26px;
+            height: 26px;
+            background: var(--grad);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+            box-shadow: 0 2px 8px rgba(99,102,241,0.3);
+        }
+        .guide-step-content { flex: 1; }
+        .guide-step-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+        .guide-step-desc {
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* Spec chips */
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 8px;
+            margin-top: 0.5rem;
+        }
+        .spec-chip {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 13px;
+        }
+        .spec-chip-label {
+            font-size: 0.68rem;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 3px;
+        }
+        .spec-chip-value {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        /* API table */
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .api-table th {
+            text-align: left;
+            color: var(--dim);
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border);
+            font-family: 'Space Mono', monospace;
+        }
+        .api-table td {
+            padding: 9px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            color: var(--muted);
+            vertical-align: top;
+        }
+        .api-table tr:last-child td { border-bottom: none; }
+        .api-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .api-method {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .api-method.get  { background: rgba(20,184,166,0.12); color: #14b8a6; }
+        .api-method.post { background: rgba(99,102,241,0.12); color: #a5b4fc; }
+        .api-endpoint {
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text);
+        }
+
+        /* nav guide button */
+        .nav-link.guide {
+            color: #a5b4fc;
+            border-color: rgba(99,102,241,0.2);
+            background: rgba(99,102,241,0.06);
+        }
+        .nav-link.guide:hover {
+            background: rgba(99,102,241,0.14);
+            border-color: rgba(99,102,241,0.4);
+            color: var(--text);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 780px) {
+            main { grid-template-columns: 1fr; padding: 1rem; }
+            .hero { padding: 2rem 1rem 1rem; }
+            .hero h1 { font-size: 1.8rem; }
+            nav { padding: 0 1rem; }
+            .nav-logo-text { display: none; }
+            .spec-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
 </head>
-
 <body>
-  <section class="hero is-primary">
-        <div class="hero-body">
-            <div class="container">
-                <h1 class="title">
-                    {{ title }}
-                </h1>
-                <p>Prototype developed in Python showing how the blockchain technology can be used as a decentralized content sharing platform</p>
-                <p>Specifications: encryption SHA-256</p>
-            </div>
+
+    <nav>
+        <a class="nav-logo" href="/">
+            <div class="nav-logo-icon">⛓</div>
+            <span class="nav-logo-text">PyBlockchain</span>
+        </a>
+        <div class="nav-links">
+            <button id="guide-btn" class="nav-link guide" style="cursor:pointer; font-family:inherit;">
+                ? How it works
+            </button>
+            <a href="/chain" target="_blank" class="nav-link">Raw Chain</a>
+            <a href="/pending_tx" target="_blank" class="nav-link">Pending TXs</a>
+            <a href="/reset" class="nav-link danger">Reset</a>
         </div>
-    </section>
+    </nav>
 
-  {% block content %}
-  {% endblock %}
+    <div class="hero">
+        <div class="hero-badge">◆ SHA-256 &nbsp;·&nbsp; Proof of Work</div>
+        <h1>Decentralized Content Sharing</h1>
+        <p>A Python blockchain prototype — write a transaction, mine a block, explore the chain.</p>
+    </div>
 
-  <footer class="footer">
-    <p>by <a href="mailto:julien.regnault@gmail.com">Julien Regnault</a></p>
-    <br>
-    <br>
-    <pr>References: https://www.ibm.com/developerworks/cloud/library/cl-develop-blockchain-app-in-python/index.html</pr>
-  </footer>
+    {% block content %}{% endblock %}
+
+    <!-- ── GUIDE MODAL ── -->
+    <div class="modal-backdrop" id="guide-modal" role="dialog" aria-modal="true" aria-label="How it works guide">
+        <div class="modal">
+
+            <div class="modal-header">
+                <div class="modal-title">
+                    <div class="modal-title-icon">📖</div>
+                    How PyBlockchain Works
+                </div>
+                <button class="modal-close" id="guide-close" aria-label="Close">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- WHAT IS THIS -->
+                <div class="guide-section">
+                    <div class="guide-section-label">Proof of Concept</div>
+                    <p class="guide-text">
+                        <strong>PyBlockchain</strong> is a minimal blockchain built in Python that demonstrates how
+                        distributed ledger technology works as a content-sharing platform.
+                        It is intentionally small — the entire blockchain core is under 100 lines — so every
+                        concept is easy to follow and inspect.
+                        <br><br>
+                        Each <strong>post</strong> you write becomes a <strong>transaction</strong>. Transactions are
+                        bundled into a <strong>block</strong> and sealed with a cryptographic hash via
+                        <strong>Proof of Work</strong>. Once mined, data is permanent and tamper-evident.
+                    </p>
+                </div>
+
+                <!-- BLOCK CHAIN VISUAL -->
+                <div class="guide-section">
+                    <div class="guide-section-label">The Chain Structure</div>
+                    <p class="guide-text" style="margin-bottom:0.5rem;">
+                        Every block holds a <strong>hash of the previous block</strong>, forming a chain.
+                        Altering any block breaks every hash that follows — making the history immutable.
+                    </p>
+                    <div class="chain-visual">
+                        <div class="chain-block genesis">
+                            <div class="cb-name">Genesis Block</div>
+                            <div class="cb-field">index: <span>0</span></div>
+                            <div class="cb-field">prev:  <span>0</span></div>
+                            <div class="cb-field">hash:  <span>00a1f3…</span></div>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="chain-block">
+                            <div class="cb-name">Block #1</div>
+                            <div class="cb-field">index: <span>1</span></div>
+                            <div class="cb-field">prev:  <span>00a1f3…</span></div>
+                            <div class="cb-field">hash:  <span>00b74c…</span></div>
+                        </div>
+                        <div class="chain-arrow">→</div>
+                        <div class="chain-block">
+                            <div class="cb-name">Block #2</div>
+                            <div class="cb-field">index: <span>2</span></div>
+                            <div class="cb-field">prev:  <span>00b74c…</span></div>
+                            <div class="cb-field">hash:  <span>00e91a…</span></div>
+                        </div>
+                        <div class="chain-arrow">→ &nbsp;···</div>
+                    </div>
+                </div>
+
+                <!-- PROOF OF WORK -->
+                <div class="guide-section">
+                    <div class="guide-section-label">Proof of Work</div>
+                    <p class="guide-text">
+                        Mining is the process of finding a <strong>nonce</strong> — an integer — such that:
+                        <br><br>
+                        <code style="display:block; background:rgba(255,255,255,0.04); border:1px solid var(--border);
+                              border-radius:8px; padding:10px 14px; font-family:'Space Mono',monospace;
+                              font-size:0.75rem; color:#a5b4fc; margin:0.5rem 0;">
+                            SHA-256( index + transactions + timestamp + prev_hash + nonce )
+                            &nbsp;&nbsp;starts with "00…"
+                        </code>
+                        This is computationally expensive to <em>find</em> but trivial to <em>verify</em>.
+                        The number of required leading zeros is the <strong>difficulty</strong> (currently <strong>2</strong>).
+                        Increasing difficulty makes mining exponentially harder.
+                    </p>
+                </div>
+
+                <!-- 3-STEP FLOW -->
+                <div class="guide-section">
+                    <div class="guide-section-label">Step-by-Step Flow</div>
+                    <div class="guide-steps">
+                        <div class="guide-step">
+                            <div class="guide-step-num">1</div>
+                            <div class="guide-step-content">
+                                <div class="guide-step-title">Create a Transaction</div>
+                                <div class="guide-step-desc">
+                                    Fill in the form with your message and name. This calls
+                                    <code style="font-family:'Space Mono',monospace; font-size:0.78rem; color:#a5b4fc;">POST /new_transaction</code>
+                                    and adds your post to the <strong>pending pool</strong> — it exists but is not yet on the chain.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <div class="guide-step-num">2</div>
+                            <div class="guide-step-content">
+                                <div class="guide-step-title">Mine a Block</div>
+                                <div class="guide-step-desc">
+                                    Click <em>Request Mining</em>. The server calls
+                                    <code style="font-family:'Space Mono',monospace; font-size:0.78rem; color:#a5b4fc;">GET /mine</code>,
+                                    bundles all pending transactions into a new block, and runs the
+                                    Proof of Work algorithm to find a valid hash. Once found, the block is
+                                    appended to the chain and saved to SQLite.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="guide-step">
+                            <div class="guide-step-num">3</div>
+                            <div class="guide-step-content">
+                                <div class="guide-step-title">Explore the Chain</div>
+                                <div class="guide-step-desc">
+                                    Mined posts appear in the feed. Use <em>Raw Chain</em> to inspect the full
+                                    JSON structure of the blockchain, or <em>Pending TXs</em> to see
+                                    what is waiting to be mined. Data persists across restarts via the local
+                                    <code style="font-family:'Space Mono',monospace; font-size:0.78rem; color:#a5b4fc;">blockchain.db</code> file.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TECH SPECS -->
+                <div class="guide-section">
+                    <div class="guide-section-label">Technical Specifications</div>
+                    <div class="spec-grid">
+                        <div class="spec-chip">
+                            <div class="spec-chip-label">Language</div>
+                            <div class="spec-chip-value">Python 3</div>
+                        </div>
+                        <div class="spec-chip">
+                            <div class="spec-chip-label">Web Framework</div>
+                            <div class="spec-chip-value">Flask</div>
+                        </div>
+                        <div class="spec-chip">
+                            <div class="spec-chip-label">Database</div>
+                            <div class="spec-chip-value">SQLite (local file)</div>
+                        </div>
+                        <div class="spec-chip">
+                            <div class="spec-chip-label">Hash Function</div>
+                            <div class="spec-chip-value">SHA-256</div>
+                        </div>
+                        <div class="spec-chip">
+                            <div class="spec-chip-label">Consensus</div>
+                            <div class="spec-chip-value">Proof of Work</div>
+                        </div>
+                        <div class="spec-chip">
+                            <div class="spec-chip-label">PoW Difficulty</div>
+                            <div class="spec-chip-value">2 leading zeros</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API REFERENCE -->
+                <div class="guide-section">
+                    <div class="guide-section-label">API Reference</div>
+                    <table class="api-table">
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Endpoint</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="api-method get">GET</span></td>
+                                <td class="api-endpoint">/</td>
+                                <td>Main UI — loads and displays the chain</td>
+                            </tr>
+                            <tr>
+                                <td><span class="api-method post">POST</span></td>
+                                <td class="api-endpoint">/new_transaction</td>
+                                <td>Add a transaction to the pending pool</td>
+                            </tr>
+                            <tr>
+                                <td><span class="api-method post">POST</span></td>
+                                <td class="api-endpoint">/submit</td>
+                                <td>Form handler — wraps /new_transaction</td>
+                            </tr>
+                            <tr>
+                                <td><span class="api-method get">GET</span></td>
+                                <td class="api-endpoint">/mine</td>
+                                <td>Run PoW, seal a block, append to chain</td>
+                            </tr>
+                            <tr>
+                                <td><span class="api-method get">GET</span></td>
+                                <td class="api-endpoint">/chain</td>
+                                <td>Return full blockchain as JSON</td>
+                            </tr>
+                            <tr>
+                                <td><span class="api-method get">GET</span></td>
+                                <td class="api-endpoint">/pending_tx</td>
+                                <td>Return unconfirmed transactions as JSON</td>
+                            </tr>
+                            <tr>
+                                <td><span class="api-method post">POST</span></td>
+                                <td class="api-endpoint">/add_block</td>
+                                <td>Accept an externally mined block (node sync)</td>
+                            </tr>
+                            <tr>
+                                <td><span class="api-method get">GET</span></td>
+                                <td class="api-endpoint">/reset</td>
+                                <td>Clear the entire chain and database</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div><!-- /modal-body -->
+        </div><!-- /modal -->
+    </div><!-- /modal-backdrop -->
+
+    <script>
+        (function () {
+            const backdrop = document.getElementById('guide-modal');
+            const open  = () => { backdrop.classList.add('open'); document.body.style.overflow = 'hidden'; };
+            const close = () => { backdrop.classList.remove('open'); document.body.style.overflow = ''; };
+
+            document.getElementById('guide-btn').addEventListener('click', open);
+            document.getElementById('guide-close').addEventListener('click', close);
+            backdrop.addEventListener('click', e => { if (e.target === backdrop) close(); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+        })();
+    </script>
+
+    <footer>
+        Built with Python &amp; Flask &nbsp;·&nbsp;
+        <a href="mailto:julien.regnault@gmail.com">Julien Regnault</a>
+    </footer>
+
 </body>
 </html>

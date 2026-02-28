@@ -1,0 +1,22 @@
+services:
+  app:
+    image: philipid3s/py-blockchain:latest
+    container_name: py-blockchain
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - blockchain_data:/data
+    environment:
+      - DB_PATH=/data/blockchain.db
+      - BASE_URL=http://localhost:8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  blockchain_data:
+    driver: local
