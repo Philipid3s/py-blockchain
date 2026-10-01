@@ -40,16 +40,26 @@
                     No pending transactions
                 </div>
                 {% endif %}
-                <a href="/mine" class="btn btn-mine">
-                    ⚡&nbsp; Request Mining
-                </a>
+                <form action="/mine" method="post">
+                    <button type="submit" class="btn btn-mine">
+                        ⚡&nbsp; Request Mining
+                    </button>
+                </form>
             </div>
         </div>
 
         <!-- Dev tools -->
         <div class="dev-tools">
             <a href="/chain" target="_blank" class="btn btn-ghost">🔗 Raw Chain</a>
-            <a href="/reset" class="btn btn-danger">✕ Reset</a>
+            {% if reset_enabled %}
+            <form action="/reset" method="post"
+                  onsubmit="return confirm('Delete the whole chain?');">
+                {% if reset_needs_token %}
+                <input type="password" name="token" placeholder="Reset token" required>
+                {% endif %}
+                <button type="submit" class="btn btn-danger">✕ Reset</button>
+            </form>
+            {% endif %}
         </div>
 
     </aside>

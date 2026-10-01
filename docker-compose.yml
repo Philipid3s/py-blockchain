@@ -9,7 +9,8 @@ services:
       - blockchain_data:/data
     environment:
       - DB_PATH=/data/blockchain.db
-      - BASE_URL=http://localhost:8000
+      # Required to enable POST /reset; leave unset to disable it
+      - RESET_TOKEN=${RESET_TOKEN:-}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
       interval: 30s

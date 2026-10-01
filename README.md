@@ -38,6 +38,13 @@ pip install -r requirements.txt
 python app.py
 ```
 
+### Run the tests
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
 Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 The `blockchain.db` file is created automatically on first run.
 
@@ -105,8 +112,9 @@ py-blockchain/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                # CI lint + Docker Hub push
-├── requirements.txt
-├── Procfile
+├── tests/                        # pytest suite (core + HTTP routes)
+├── requirements.txt              # pinned runtime dependencies
+├── requirements-dev.txt          # + pytest
 └── .gitignore
 ```
 
@@ -119,11 +127,11 @@ py-blockchain/
 | `GET` | `/` | Main UI — loads and displays the chain |
 | `POST` | `/new_transaction` | Add a transaction to the pending pool |
 | `POST` | `/submit` | Form handler — wraps `/new_transaction` |
-| `GET` | `/mine` | Run PoW, seal a block, append to chain |
+| `POST` | `/mine` | Run PoW, seal a block, append to chain |
 | `GET` | `/chain` | Return full blockchain as JSON |
 | `GET` | `/pending_tx` | Return unconfirmed transactions as JSON |
 | `POST` | `/add_block` | Accept an externally mined block (node sync) |
-| `GET` | `/reset` | Clear the entire chain and database |
+| `POST` | `/reset` | Clear the entire chain and database (requires `RESET_TOKEN`, sent as form field `token` or header `X-Reset-Token`) |
 
 ---
 
@@ -179,7 +187,7 @@ docker compose pull          # get the latest image from Docker Hub
 docker compose up -d         # start in background
 ```
 
-The app is now running on **port 8000**. The SQLite database is stored in a Docker volume (`blockchain_data`) and survives container restarts and image updates.
+The app is now running on **port 8030** (mapped to 8000 inside the container). The SQLite database is stored in a Docker volume (`blockchain_data`) and survives container restarts and image updates.
 
 ### 4 — Update after a new push
 
@@ -201,7 +209,7 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:8000;
+        proxy_pass http://localhost:8030;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
@@ -221,8 +229,8 @@ sudo certbot --nginx -d your-domain.com
 
 | Environment Variable | Default | Description |
 |---|---|---|
-| `BASE_URL` | `http://localhost:8000` | URL the app uses to self-call for `/submit` |
 | `DB_PATH` | `blockchain.db` | Path to the SQLite database file |
+| `RESET_TOKEN` | *(unset)* | Secret required by `POST /reset`. When unset, reset is only available when running `python app.py` (debug mode). |
 
 ---
 
@@ -230,11 +238,10 @@ sudo certbot --nginx -d your-domain.com
 
 This is a PoC — not production-ready:
 
-- No authentication or access control on `/reset`
+- No CSRF protection or rate limiting on the form endpoints
 - Single-node only (no real peer-to-peer networking)
 - PoW difficulty (`2`) is low — mines in milliseconds
-- No chain integrity validation on startup
-- `/add_block` endpoint has a syntax bug (see issue tracker)
+- `/add_block` does not remove the received block's transactions from the local pending pool
 - Single gunicorn worker required due to shared in-memory state
 
 ---
