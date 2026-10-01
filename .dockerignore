@@ -28,8 +28,9 @@ Dockerfile
 docker-compose*.yml
 .dockerignore
 
-# Deployment configs no longer in use
-render.yaml
+# Tests
+tests/
+requirements-dev.txt
 
 # Editor / OS
 .vscode/

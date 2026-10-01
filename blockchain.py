@@ -43,7 +43,7 @@ class BlockChain:
         return True
 
     def add_new_transaction(self, transaction):
-            self.unconfirmed_transactions.append(transaction)
+        self.unconfirmed_transactions.append(transaction)
 
     def mine(self):
         """
@@ -52,7 +52,7 @@ class BlockChain:
         and figuring out Proof of Work.
         """
         if not self.unconfirmed_transactions:
-            return False
+            return None
 
         last_block = self.last_block
 
@@ -65,6 +65,26 @@ class BlockChain:
         self.add_block(new_block, proof)
         self.unconfirmed_transactions = []
         return new_block.index
+
+    def check_chain_validity(self):
+        """
+        Walk the whole chain and check that every block is linked to its
+        predecessor and that every stored hash matches the block content.
+        """
+        if not self.chain:
+            return False
+
+        genesis = self.chain[0]
+        if genesis.previous_hash != "0" or                 getattr(genesis, 'hash', None) != genesis.compute_hash():
+            return False
+
+        for previous, block in zip(self.chain, self.chain[1:]):
+            if block.previous_hash != previous.hash:
+                return False
+            if not self.is_valid_proof(block, getattr(block, 'hash', '')):
+                return False
+
+        return True
 
     @staticmethod
     def is_valid_proof(block, block_hash):

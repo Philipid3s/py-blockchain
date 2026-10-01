@@ -20,7 +20,6 @@ VOLUME ["/data"]
 USER app
 
 ENV DB_PATH=/data/blockchain.db
-ENV BASE_URL=http://localhost:8000
 ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000

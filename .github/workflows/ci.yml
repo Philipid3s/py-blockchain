@@ -9,7 +9,7 @@ on:
 jobs:
   # ── Job 1: syntax check (runs on every push and PR) ──────────────────────
   lint:
-    name: Syntax check
+    name: Syntax check & tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       - name: Check Python syntax
         run: python -m py_compile app.py block.py blockchain.py
@@ -32,6 +32,9 @@ jobs:
           from blockchain import BlockChain
           print("OK: block.py and blockchain.py import successfully")
           EOF
+
+      - name: Run tests
+        run: python -m pytest -q
 
   # ── Job 2: build & push Docker image (runs only on push to master/main) ──
   docker:

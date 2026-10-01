@@ -240,7 +240,7 @@
         }
 
         /* ── FORM ELEMENTS ── */
-        textarea, input[type="text"] {
+        textarea, input[type="text"], input[type="password"] {
             width: 100%;
             background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
@@ -254,7 +254,7 @@
             transition: border-color 0.18s, box-shadow 0.18s;
         }
         textarea::placeholder, input::placeholder { color: var(--dim); }
-        textarea:focus, input[type="text"]:focus {
+        textarea:focus, input[type="text"]:focus, input[type="password"]:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
         }
@@ -370,6 +370,8 @@
             gap: 8px;
         }
         .dev-tools .btn { flex: 1; font-size: 0.79rem; }
+        .dev-tools form { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .dev-tools input[type="password"] { margin-bottom: 0; }
 
         /* ── FEED ── */
         .feed-header {
@@ -1000,7 +1002,7 @@
                                 <td>Form handler — wraps /new_transaction</td>
                             </tr>
                             <tr>
-                                <td><span class="api-method get">GET</span></td>
+                                <td><span class="api-method post">POST</span></td>
                                 <td class="api-endpoint">/mine</td>
                                 <td>Run PoW, seal a block, append to chain</td>
                             </tr>
@@ -1020,9 +1022,9 @@
                                 <td>Accept an externally mined block (node sync)</td>
                             </tr>
                             <tr>
-                                <td><span class="api-method get">GET</span></td>
+                                <td><span class="api-method post">POST</span></td>
                                 <td class="api-endpoint">/reset</td>
-                                <td>Clear the entire chain and database</td>
+                                <td>Clear the entire chain and database (needs <code>RESET_TOKEN</code>)</td>
                             </tr>
                         </tbody>
                     </table>

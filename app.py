@@ -1,132 +1,141 @@
 from block import Block
 from blockchain import BlockChain
-from flask import Flask, render_template, redirect, request
-import json
-import time
+from flask import Flask, abort, render_template, redirect, request
 import datetime
+import hmac
+import json
+import logging
 import os
 import sqlite3
+import time
 
-DB_PATH = os.environ.get('DB_PATH', 'blockchain.db')
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.config['DB_PATH'] = os.environ.get('DB_PATH', 'blockchain.db')
+# When set, /reset requires this token. When unset, /reset is only
+# available in debug/testing mode.
+app.config['RESET_TOKEN'] = os.environ.get('RESET_TOKEN', '')
 
 blockchain = BlockChain()
-posts = []
 
 
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute("""
+def connect_db():
+    conn = sqlite3.connect(app.config['DB_PATH'])
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS blockchain (
             chain TEXT,
             pending_tx TEXT
         )
     """)
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
-init_db()
+    return conn
 
 
 def timestamp_to_string(epoch_time):
-    return datetime.datetime.fromtimestamp(epoch_time).strftime('%H:%M')
+    return datetime.datetime.fromtimestamp(epoch_time).strftime('%Y-%m-%d %H:%M')
+
+
+def chain_as_dict():
+    chain_data = [block.__dict__ for block in blockchain.chain]
+    return {"length": len(chain_data), "chain": chain_data}
 
 
 def save_db():
-    chain_data = [block.__dict__ for block in blockchain.chain]
-    chain = json.dumps({"length": len(chain_data), "chain": chain_data})
+    chain = json.dumps(chain_as_dict())
     pending_tx = json.dumps(blockchain.unconfirmed_transactions)
 
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM blockchain;")
-    count = cur.fetchone()[0]
-    if count > 0:
-        cur.execute("UPDATE blockchain SET chain = ?, pending_tx = ?;", (chain, pending_tx))
-    else:
-        cur.execute("INSERT INTO blockchain VALUES (?, ?);", (chain, pending_tx))
-    conn.commit()
-    cur.close()
+    conn = connect_db()
+    with conn:
+        count = conn.execute("SELECT COUNT(*) FROM blockchain;").fetchone()[0]
+        if count > 0:
+            conn.execute("UPDATE blockchain SET chain = ?, pending_tx = ?;",
+                         (chain, pending_tx))
+        else:
+            conn.execute("INSERT INTO blockchain VALUES (?, ?);",
+                         (chain, pending_tx))
     conn.close()
 
 
 def load_db():
     global blockchain
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM blockchain;")
-    data = cur.fetchone()
-    if data is not None:
-        chain = []
-        obj = json.loads(data[0])
-        for block in obj['chain']:
-            blk = Block(block['index'],
-                        block['transactions'],
-                        block['timestamp'],
-                        block['previous_hash'])
-            blk.hash = block['hash']
-            chain.append(blk)
-        blockchain.chain = chain
-        blockchain.unconfirmed_transactions = json.loads(data[1])
-    else:
-        blockchain = BlockChain()
-    cur.close()
+    conn = connect_db()
+    data = conn.execute("SELECT * FROM blockchain;").fetchone()
     conn.close()
+
+    if data is None:
+        # Persist the genesis block straight away so it stays stable
+        # across requests.
+        blockchain = BlockChain()
+        save_db()
+        return
+
+    obj = json.loads(data[0])
+    blockchain.chain = [Block.from_dict(block) for block in obj['chain']]
+    blockchain.unconfirmed_transactions = json.loads(data[1])
 
 
 def clear_db():
-    conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
-    cur.execute("DELETE FROM blockchain;")
-    conn.commit()
-    cur.close()
+    conn = connect_db()
+    with conn:
+        conn.execute("DELETE FROM blockchain;")
     conn.close()
+
+
+def reset_allowed():
+    token = app.config['RESET_TOKEN']
+    if not token:
+        return app.debug or app.testing
+    supplied = request.form.get('token') or request.headers.get('X-Reset-Token', '')
+    return hmac.compare_digest(supplied, token)
+
+
+def parse_transaction(data):
+    """
+    Return a clean transaction dict, or None if author/content are
+    missing or not non-empty strings.
+    """
+    if not isinstance(data, dict):
+        return None
+    tx = {}
+    for field in ("author", "content"):
+        value = data.get(field)
+        if not isinstance(value, str) or not value.strip():
+            return None
+        tx[field] = value.strip()
+    tx["timestamp"] = time.time()
+    return tx
 
 
 @app.route('/')
 def index():
-    print("--- START load data from DB ---")
     load_db()
-    print("--- END load data from DB ---")
 
-    content = []
-
+    posts = []
     for block in blockchain.chain:
         for tx in block.transactions:
-            tx["index"] = block.index
-            tx["hash"] = block.previous_hash
-            content.append(tx)
-
-    global posts
-    posts = sorted(content, key=lambda k: k['timestamp'],
-                       reverse=True)
+            # Copy so the block's own transactions are left untouched.
+            posts.append({**tx, "index": block.index})
+    posts.sort(key=lambda k: k['timestamp'], reverse=True)
 
     return render_template('index.html',
                            title='BlockChain - '
                                  'Distributed content sharing',
                            posts=posts,
                            pending_tx=len(blockchain.unconfirmed_transactions),
+                           reset_enabled=bool(app.config['RESET_TOKEN']) or app.debug,
+                           reset_needs_token=bool(app.config['RESET_TOKEN']),
                            readable_time=timestamp_to_string)
 
 
 @app.route('/submit', methods=['POST'])
 def submit_textarea():
-    post_content = request.form.get("content", "").strip()
-    author = request.form.get("author", "").strip()
-
-    if not post_content or not author:
+    tx = parse_transaction(request.form)
+    if tx is None:
         return redirect('/')
 
     load_db()
-    blockchain.add_new_transaction({
-        'author': author,
-        'content': post_content,
-        'timestamp': time.time(),
-    })
+    blockchain.add_new_transaction(tx)
     save_db()
 
     return redirect('/')
@@ -134,64 +143,52 @@ def submit_textarea():
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
-    chain_data = []
-    for block in blockchain.chain:
-        chain_data.append(block.__dict__)
-    return json.dumps({"length": len(chain_data),
-                       "chain": chain_data}), 200
+    load_db()
+    return json.dumps(chain_as_dict()), 200, {'Content-Type': 'application/json'}
 
 
 @app.route('/new_transaction', methods=['POST'])
 def new_transaction():
-    print("--- new transaction ---")
-    print("--- START load data from DB ---")
+    tx = parse_transaction(request.get_json(silent=True))
+    if tx is None:
+        return "Invalid transaction data", 400
+
     load_db()
-    print("--- END load data from DB ---")
-    tx_data = request.get_json()
-    required_fields = ["author", "content"]
-
-    for field in required_fields:
-        if not tx_data.get(field):
-            return "Invalid transaction data", 404
-
-    tx_data["timestamp"] = time.time()
-
-    blockchain.add_new_transaction(tx_data)
-
-    print("--- START save data in DB ---")
+    blockchain.add_new_transaction(tx)
     save_db()
-    print("--- END save data in DB ---")
 
     return "Success", 201
 
 
-@app.route('/mine', methods=['GET'])
+@app.route('/mine', methods=['POST'])
 def mine_unconfirmed_transactions():
-    print("--- START load data from DB ---")
     load_db()
-    print("--- END load data from DB ---")
     result = blockchain.mine()
-    print("Block #{} is mined.".format(result))
-
-    print("--- START save data in DB ---")
-    save_db()
-    print("--- END save data in DB ---")
+    if result is None:
+        logger.info("Nothing to mine.")
+    else:
+        logger.info("Block #%s is mined.", result)
+        save_db()
 
     return redirect('/')
 
 
-@app.route('/reset', methods=['GET'])
+@app.route('/reset', methods=['POST'])
 def reset_chain():
-    print("--- START clear DB ---")
+    if not reset_allowed():
+        abort(403)
     clear_db()
-    print("--- END clear DB ---")
+    blockchain.reset()
+    logger.info("Chain reset.")
     return redirect('/')
 
 
 # endpoint to query unconfirmed transactions
 @app.route('/pending_tx')
 def get_pending_tx():
-    return json.dumps(blockchain.unconfirmed_transactions)
+    load_db()
+    return json.dumps(blockchain.unconfirmed_transactions), 200, \
+        {'Content-Type': 'application/json'}
 
 
 # endpoint to add a block mined by someone else to
@@ -199,18 +196,21 @@ def get_pending_tx():
 # and then added to the chain.
 @app.route('/add_block', methods=['POST'])
 def validate_and_add_block():
-    block_data = request.get_json()
-    block = Block(block_data["index"],
-                  block_data["transactions"],
-                  block_data["timestamp",
-                  block_data["previous_hash"]])
+    block_data = request.get_json(silent=True)
+    required = ("index", "transactions", "timestamp", "previous_hash", "nonce", "hash")
+    if not isinstance(block_data, dict) or not all(k in block_data for k in required):
+        return "Invalid block data", 400
 
-    proof = block_data['hash']
-    added = blockchain.add_block(block, proof)
+    load_db()
+    block = Block.from_dict(block_data)
+    proof = block.hash
+    del block.hash
 
-    if not added:
+    if block.index != blockchain.last_block.index + 1 or \
+            not blockchain.add_block(block, proof):
         return "The block was discarded by the node", 400
 
+    save_db()
     return "Block added to the chain", 201
 
 
